@@ -8,57 +8,43 @@ const app = express();
 
 const port = process.env.PORT || 8080;
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const id = uuidv4();
-    const dataPath = path.resolve(__dirname,'..', 'files', id)
-    console.log(__dirname);
-  
-
-    (<any>req).uploadedId  = id;
-
-    fs.mkdirSync(path.resolve(dataPath));
-    const fileData = {
-      filename: file.originalname,
-      mimetype: file.mimetype,
-    }
-    fs.writeFileSync(path.resolve(dataPath, 'index.json'), JSON.stringify(fileData, null, 4), 'utf-8');
-    cb(null, dataPath);
-  },
-  filename: function (req, file, cb) {
-    console.log('filename');
-
-    console.log(file);
-
-    cb(null, file.originalname);
-  },
+app.listen(port, () => {
+  console.log(`server started at http://localhost:${port}`);
 });
-
-const upload = multer({ storage: storage });
 
 app.use('/', express.static('static'));
 
-app.use('/filepond', express.static('node_modules/filepond/dist'));
+app.use(express.json());
 
-app.get('/ping', (req, res) => {
-  res.send('pong');
+app.post('/create-secret', (req, res) => {
+  console.log(req.body);
+  const json = JSON.stringify(req.body);
+  const id = uuidv4();
+  const dataPath = path.resolve(__dirname, '..', 'files', id);
+  fs.mkdirSync(dataPath);
+  fs.writeFile(path.resolve(dataPath, 'index.json'), json, 'utf8', (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send({ status: 'ok', id: id });
+    }
+  });
 });
-app.post('/upload', upload.single('filepond'), (req, res) => {
-  
-  res.send({status:'ok' , id:(<any>req).uploadedId });
-});
-app.get('/d/:id', (req, res) => {
+
+app.get('/d/:id', async (req, res) => {
   const id = req.params.id;
-  const dataPath = path.resolve(__dirname,'..', 'files', id)
+  const dataPath = path.resolve(__dirname, '..', 'files', id);
+  console.log(dataPath);
+
   const indexJsonPath = path.resolve(dataPath, 'index.json');
+  console.log(indexJsonPath);
+  fs.readFile(indexJsonPath, 'utf8', (err, data) => {
+    if (err) {
+      res.send({ status: 'error', message: 'no such files' });
+    } else {
+      res.send(JSON.parse(<string>data));
+    }
+  });
 
-  const fileData = fs.readFileSync(indexJsonPath) as unknown;
-
-  const filename = JSON.parse(<string>fileData).filename;
-
-  res.download(path.resolve(dataPath, filename));
-})
-// start the Express server
-app.listen(port, () => {
-  console.log(`server started at http://localhost:${port}`);
+  fs.rmdirSync(dataPath, { recursive: true });
 });

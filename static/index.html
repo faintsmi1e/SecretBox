@@ -6,8 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Загрузка файлов</title>
   <link rel="stylesheet" href="./filepond/filepond.min.css">
+  <style>
+    .super-form {
+      display: flex;
+      flex-direction: column;
+      max-width: 300px;
+    }
+    h4 {
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
+  <form class="super-form"action="/create-secret" method="POST">
+    <h4>Заголовок</h4>
+    <input name="title" class="super-form__title">
+    <h4>Описание</h4>
+    <textarea name="description" class="super-form__description">
+
+    </textarea>
+    <button> Создать секрет</button>
+
+  </form>
   <script src="./filepond/filepond.min.js"></script>
   <script src="./app.js"></script>
 </body>
